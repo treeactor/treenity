@@ -1,0 +1,75 @@
+{
+  "name": "feathers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server/index.ts",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch-server": "parcel watch --target node --public-url ./ src/server/index.ts",
+    "client": "parcel build src/client/index.html --out-dir dist/client-prod --public-url ./",
+    "watch-client": "parcel watch src/client/index.html --out-dir dist/client",
+    "serve-client": "parcel serve src/client/index.html --out-dir dist/client",
+    "jest": "jest --forceExit"
+  },
+  "directories": {
+    "lib": "src",
+    "test": "test/",
+    "config": "config/"
+  },
+  "alias": {
+    "treenity": "./src/treenity"
+  },
+  "engines": {
+    "node": "^13.0.0",
+    "yarn": ">= 0.18.0"
+  },
+  "targets": {
+    "browser": {
+      "publicUrl": "./"
+    }
+  },
+  "types": "dist/",
+  "dependencies": {
+    "@feathersjs/authentication": "^4.4.3",
+    "@feathersjs/authentication-client": "^4.4.3",
+    "@feathersjs/authentication-local": "^4.4.3",
+    "@feathersjs/authentication-oauth": "^4.4.3",
+    "@feathersjs/client": "^4.4.3",
+    "@feathersjs/configuration": "^4.4.3",
+    "@feathersjs/express": "^4.4.3",
+    "@feathersjs/feathers": "^4.4.3",
+    "@feathersjs/socketio": "^4.4.3",
+    "@feathersjs/socketio-client": "^4.4.3",
+    "@feathersjs/transport-commons": "^4.4.3",
+    "feathers-mongodb": "^6.1.0",
+    "immer": "latest",
+    "lodash-es": "^4.17.15",
+    "mongodb": "^3.4.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "reflect-metadata": "^0.1.13",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0",
+    "typedjson": "^1.5.1",
+    "winston": "^3.2.1",
+    "yup": "^0.28.0",
+    "yup-decorator": "^2.1.0",
+    "helmet": "latest",
+    "cors": "latest"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.23",
+    "@types/react": "^16.9.16",
+    "@types/react-dom": "^16.9.4",
+    "@types/socket.io-client": "^1.4.32",
+    "jest": "^24.9.0",
+    "parcel": "^1.12.4",
+    "parcel-plugin-bundle-visualiser": "^1.2.0",
+    "ts-jest": "^24.2.0",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.3"
+  }
+}
