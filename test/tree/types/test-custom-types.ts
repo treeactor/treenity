@@ -2,7 +2,7 @@
 import { a, is, makeObjectDecorator, n, nested, RootClass, s } from '../../../src/treenity/model/types';
 import { WithId } from '../../../src/treenity/meta/meta.model';
 
-const object = makeObjectDecorator(RootClass);
+const object = makeObjectDecorator(() => RootClass);
 
 @object('inner1')
 class Inner extends RootClass {

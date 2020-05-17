@@ -1,7 +1,9 @@
-import produce, { produceWithPatches } from 'immer';
+import produce, { Patch, produceWithPatches } from 'immer';
+import { getSchemaByType } from 'yup-decorator';
 
 import { a, is, n, nested, object, RootClass, s } from '../../../src/treenity/model/types';
-import { createSerializer } from '../../../src/treenity/model/serializer';
+import { createSerializer, nameof } from '../../../src/treenity/model/serializer';
+import { makeUpdateFromPatch } from '../../../src/treenity/model/make-patch-update';
 
 @object('topatch.deeper')
 class Deeper extends RootClass {
@@ -19,8 +21,18 @@ class Inner extends RootClass {
 
   @is(s.required())
   public str: string;
+
+  @is(n)
+  public num?: number;
+
   @nested
   public deep: Deeper = new Deeper();
+}
+
+@object('topatch.inner2')
+class Inner2 extends Inner {
+  @is(n)
+  public num2: number = 56;
 }
 
 
@@ -34,6 +46,9 @@ class ToPatch extends RootClass {
 
   @nested
   inner: Inner = new Inner('topatch');
+
+  @nested
+  inner2?: Inner;
 
   @is(n)
   num?: number = 5;
@@ -53,11 +68,21 @@ describe('immer to service patch', () => {
       // draft.inner = new Inner('draft');
       draft.inner.deep.deeper = 'deeeeper';
       draft.inner.str = 'draft-more';
+      draft.inner.num = 42;
+
+      draft.inner2 = new Inner2('topatch2');
 
       delete draft.num;
     });
 
     expect(newObj).toBeInstanceOf(ToPatch);
+
+    const typeName = getSchemaByType(ToPatch).name;
+
+    const update = makeUpdateFromPatch(typeName, patch);
+    expect(update.$set['inner.deep.deeper']).toBe('deeeeper');
+    expect(update.$set['inner.num']).toBe(42);
+
 
     expect(patch).toBeDefined();
   })

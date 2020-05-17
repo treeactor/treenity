@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Schema } from 'yup';
 import { immerable } from 'immer';
-import { an, getSchemaByType, is as isY, namedSchema, nested as nestedY } from 'yup-decorator';
+import { an, getNamedSchema, getSchemaByType, is as isY, namedSchema, nested as nestedY } from 'yup-decorator';
 
 import { jsonArrayMember, jsonMember, jsonObject } from 'typedjson';
 import { ParameterlessConstructor } from 'typedjson/js/typedjson/types';
@@ -52,31 +52,25 @@ const schemaNameToType = {
   bool: Boolean,
 };
 
-export function object(name: string): ClassDecorator {
-  return (target: Function) => {
+export function makeObjectDecorator(rootResolver) {
+  return (name: string, options?: IJsonObjectOptions<any>): ClassDecorator => (target: Function) => {
     const parentSchema = getSchemaByType(Object.getPrototypeOf(target));
     namedSchema(name, parentSchema)(target);
 
-    jsonObject({ name })(target as ParameterlessConstructor<any>);
-    // find root type meta info in TypedJSON, knownTypes needed to understand our type is from our hierarchy
-    findRootMetaInfo(target.prototype).knownTypes.add(target);
-
-    schemaNameToType[name] = target;
-  };
-}
-
-export function makeObjectDecorator(rootType) {
-  return (name: string, options?: IJsonObjectOptions<any>): ClassDecorator => (target: Function) => {
-    const parentSchema = getSchemaByType(target);
-    namedSchema(name, parentSchema)(target);
+    // add name property to schema
+    const schema = getNamedSchema(name);
+    if (schema) schema.name = name;
 
     jsonObject({ name, ...options })(target as ParameterlessConstructor<any>);
     // find root type meta info in TypedJSON, knownTypes needed to understand our type is from our hierarchy
-    rootType.prototype[META_FIELD].knownTypes.add(target);
+    rootResolver(target).knownTypes.add(target);
 
     schemaNameToType[name] = target;
   }
 }
+
+export const object = makeObjectDecorator(target => findRootMetaInfo(target.prototype));
+
 
 
 export function is(schema, type?: Function): PropertyDecorator {
@@ -96,5 +90,9 @@ export function is(schema, type?: Function): PropertyDecorator {
 
 @object('root')
 export class RootClass {
+  // public _t: string;
+  // constructor() {
+  //   this._t = getSchemaByType(this).name;
+  // }
 }
 RootClass[immerable] = true;

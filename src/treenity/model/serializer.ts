@@ -6,7 +6,7 @@ import { JsonObjectMetadata } from 'typedjson/js/typedjson/metadata';
 
 import { RootClass } from './types';
 
-function nameof(fn: Function & { name?: string }) {
+export function nameof(fn: Function & { name?: string }) {
   return fn.name || 'undefined';
 }
 
@@ -19,7 +19,7 @@ function typeHintEmitter(
   expectedSourceType: Function,
   sourceTypeMetadata?: JsonObjectMetadata,
 ) {
-  // By default, we put a "__type" property on the output object if the actual object is not the
+  // By default, we put a "_t" property on the output object if the actual object is not the
   // same as the expected one, so that deserialization will know what to deserialize into (given
   // the required known-types are defined, and the object is a valid subtype of the expected type).
   if (sourceObject.constructor !== expectedSourceType) {

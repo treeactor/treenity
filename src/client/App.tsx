@@ -4,15 +4,15 @@ import Tree from './components/Tree';
 import client from './feathers';
 
 export function App() {
-  const [connected, setConnected] = useState(true);
+  const [connected, setConnected] = useState(false);
   useEffect(() => {
-    client.io.on('connection', () => {
+    client.io.on('connect', () => {
       setConnected(true);
     });
   });
 
 
   return connected
-      ? <Tree />
-      : <div>Connecting...</div>;
+    ? <Tree />
+    : <div>Connecting...</div>;
 }

@@ -15,6 +15,7 @@ import config from '../config-common';
 import { HelloService } from '../mods/server';
 import createClientDb from '../mods/mongo/mongod';
 import TreeService from '../treenity/tree/tree.service';
+import MessageService from '../treenity/message/message.service';
 
 async function main() {
   const app = express(feathers());
@@ -35,6 +36,7 @@ async function main() {
     Model: db.collection('nodes'),
   }));
   app.use('tree', new TreeService());
+  app.use('message', new MessageService());
 
 
   app.use('hello', new HelloService());
@@ -44,8 +46,18 @@ async function main() {
   app.listen({
     host,
     port,
-  }, () =>
-    console.log(`App is running on http://${host}:${port}`));
+  }, () => {
+    console.log(`App is running on http://${host}:${port}`);
+
+    app.on('connection', connection => {
+      // app.channel('tree').join(connection);
+      app.channel('anonymous').join(connection);
+    });
+
+    // app.service('tree').publish('patched', data => {
+      // return app.channel('tree');
+    // });
+  });
 
 }
 

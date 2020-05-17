@@ -1,8 +1,9 @@
 import * as ReactDOM from 'react-dom';
 import * as React from 'react';
 
+import './index.less';
+
 import '../common/index';
+import routes from './routes';
 
-import { App } from './App';
-
-ReactDOM.render(React.createElement(App), document.getElementById('app'));
+ReactDOM.render(React.createElement(routes), document.getElementById('app'));
