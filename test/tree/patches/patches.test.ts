@@ -1,67 +1,48 @@
+import { types } from 'mobx-state-tree';
 import produce, { Patch, produceWithPatches } from 'immer';
-import { getSchemaByType } from 'yup-decorator';
 
-import { a, is, n, nested, object, RootClass, s } from '../../../src/treenity/model/types';
-import { createSerializer, nameof } from '../../../src/treenity/model/serializer';
 import { makeUpdateFromPatch } from '../../../src/treenity/model/make-patch-update';
 
-@object('topatch.deeper')
-class Deeper extends RootClass {
-  @is(s.required())
-  public deeper: string = '';
-}
-
-@object('topatch.inner')
-class Inner extends RootClass {
-  constructor(str) {
-    super();
-
-    this.str = str;
-  }
-
-  @is(s.required())
-  public str: string;
-
-  @is(n)
-  public num?: number;
-
-  @nested
-  public deep: Deeper = new Deeper();
-}
-
-@object('topatch.inner2')
-class Inner2 extends Inner {
-  @is(n)
-  public num2: number = 56;
-}
+const Deeper = types.model('topatch.deeper', {
+  deeper: '',
+});
 
 
-@object('topatch')
-class ToPatch extends RootClass {
-  @is(a.of(s))
-  public strings: string[] = [];
+const Inner = types.model('topatch.inner', {
+  str: types.string,
 
-  @is(s)
-  public str: string = '';
+  num: types.maybe(types.number),
 
-  @nested
-  inner: Inner = new Inner('topatch');
+  deep: Deeper,
+});
 
-  @nested
-  inner2?: Inner;
+const Inner2 = types.model('topatch.inner2', {
+  str: '',
+  num2: 56,
+});
 
-  @is(n)
-  num?: number = 5;
-}
+
+const ToPatch = types.model('topatch', {
+  strings: types.array(types.string),
+
+  str: '',
+
+  inner: types.optional(
+    Inner,
+    () => Inner.create({ str: 'topatch', deep: Deeper.create() }),
+  ),
+
+  inner2: types.maybe(Inner),
+
+  num: types.maybe(types.optional(types.number, 5)),
+});
 
 describe('immer to service patch', () => {
-  const serializer = createSerializer();
-
   it('immer patch to service', () => {
 
-    const toPatch = new ToPatch();
+    const toPatch = ToPatch.create();
 
-    const [newObj, patch] = produceWithPatches(toPatch, draft => {
+    const [newObj, patch] = produceWithPatches(toPatch, (draft: typeof toPatch) => {
       draft.str = 'test str';
       draft.strings.push('some stirng');
       draft.strings.push('another string');
@@ -70,7 +51,7 @@ describe('immer to service patch', () => {
       draft.inner.str = 'draft-more';
       draft.inner.num = 42;
 
-      draft.inner2 = new Inner2('topatch2');
+      draft.inner2 = Inner2.create({ str: 'topatch2' });
 
       delete draft.num;
     });
@@ -85,5 +66,5 @@ describe('immer to service patch', () => {
 
 
     expect(patch).toBeDefined();
-  })
+  });
 });

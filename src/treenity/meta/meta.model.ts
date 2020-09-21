@@ -1,99 +1,25 @@
-import { getNamedSchema, getSchemaByType } from 'yup-decorator';
-import { n, s, a, nested, is, object, RootClass } from '../model/types';
-import { createSerializer } from '../model/serializer';
-
-@object('base')
-export class Base extends RootClass {
-  public static create<T>(this: { new(): T }, data?: object): T {
-    const obj = new this();
-    if (data) {
-      Object.assign(obj, data);
-    }
-    return obj;
-  }
-
-  update() {
-
-  }
-}
-
-@object('withId')
-export class WithId extends Base {
-  @is(s.required())
-  _id: string = 'id';
-
-}
+import { types } from 'mobx-state-tree';
 
 export interface Node {
 }
 
+export const WithId = types.model('withid', {
+  _id: types.string,
+});
 
-@object('link')
-export class Link {
-  @is(s.required())
-  readonly rm: Id; // remote meta id
-  @is(s.required())
-  readonly rp: string; // remote path
+export const Link = types.model('link', {
 
-  @is(s)
-  readonly lm?: Id; // local meta
-  @is(s.required())
-  readonly lp: string; // local path
+});
 
-  constructor(rm, rp, lp, lm?) {
-    this.rm = rm;
-    this.lp = lp;
-    this.rp = rp;
-    this.lm = lm;
-  }
-}
+export const Meta = types.compose('meta', WithId, types.model({
+  _tg: types.array(types.string),
+  _l: types.array(Link),
+})).actions(self => ({
+  update(fn) {
+    fn(self);
+  },
+  set(obj) {
+    Object.assign(self, obj);
+  },
+}));
 
-@object('meta')
-export default class Meta extends WithId {
-  @is(a.of(s))
-  _tg?: string[];
-  @is(a.of(Link))
-  _l?: Link[];
-
-  readonly node: Node;
-}
-
-type Id = string;
-
-@object('node')
-export class Node extends Meta {
-  @is(s.required())
-  // @ts-ignore will be filled while object initialization
-  public _p: Id = '';
-  @is(a.of(s).required())
-  // @ts-ignore
-  public _pa: Id[] = [];
-
-  // @ts-ignore
-  // @is(a.of(Meta).required())
-  // public _m: Meta[] = [];
-  //
-  // @is(a.of(Link).required())
-  // public _l: Link[] = [];
-
-  constructor() {
-    super();
-
-    this._m.forEach(m => m.node = this);
-  }
-  // constructor(json) {
-  //   super();
-  //
-  //   let serializer = createSerializer();
-  //   this._m = json._m.map(m => serializer.parse(m));
-  //   this._l = json._l.map()
-  // }
-
-}
-
-// definePresentation(Meta, {
-//   str: {
-//     columnWidth: 20,
-//   },
-//   // ...
-// });

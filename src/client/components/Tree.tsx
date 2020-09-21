@@ -1,15 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-import { produceWithPatches } from 'immer';
-
+import { observer } from 'mobx-react-lite';
 
 import client from '../feathers';
-import { createSerializer } from '../../treenity/model/serializer';
 import { Node } from '../../treenity/tree/node';
 import { useServiceFind } from '../utils/useServiceFind';
 import { randomId } from '../../common/random-id';
-
+import { getActions } from '../../mst/get-actions';
 
 function createSomething() {
   const node = Node.create({
@@ -18,41 +15,51 @@ function createSomething() {
     data: { some: 'test' },
   });
 
-  const obj = createSerializer().toPlainJson(node);
-
-  client.service('tree').create(obj);
+  client.service('tree').create(node);
 }
 
-function patchSomething(obj: Node) {
-  const [data, patch] = produceWithPatches(obj, draft => {
-    draft.name = 'patched' + randomId();
-  });
+function patch(node: Node, updater) {
+  const actions = getActions(node, updater);
 
-  return client.service('tree').patch(obj._id, patch);
+  return client.service('tree').patch(node._id, actions);
 }
 
-function removeSomething(obj: Node) {
-  return client.service('tree').remove(obj._id);
+function remove(node: Node) {
+  return client.service('tree').remove(node._id);
 }
 
-export default function Tree({}) {
-  const data = useServiceFind('tree', {});
+export default observer(function Tree({}) {
+  const nodes = useServiceFind('tree', {});
 
-  if (!data) {
+  const patchSomething = (n) =>
+    patch(n, (n) => {
+      n.set({ name: 'patched' + randomId() });
+    });
+
+  if (!nodes) {
     return <div>Loading</div>;
   }
 
-  return (<div style={{ padding: 16 }}>
-    <h3>Tree</h3>
-    {data.map(d => <p key={d.name}>{d.name}
-      <button style={{ marginLeft: 8 }} onClick={() => patchSomething(d)}>patch</button>
-      <button style={{ marginLeft: 4 }} onClick={() => removeSomething(d)}>remove</button>
-    </p>)}
-    <div>
-      <button onClick={createSomething}>Create</button>
+  return (
+    <div style={{ padding: 16 }}>
+      <h3>Tree</h3>
+      {nodes.map((n) => (
+        <p key={n.name}>
+          {n.name}
+          <button style={{ marginLeft: 8 }} onClick={() => patchSomething(n)}>
+            patch
+          </button>
+          <button style={{ marginLeft: 4 }} onClick={() => remove(n)}>
+            remove
+          </button>
+        </p>
+      ))}
+      <div>
+        <button onClick={createSomething}>Create</button>
+      </div>
+      <div style={{ marginTop: 48 }}>
+        <Link to="/craft">Craft</Link>
+      </div>
     </div>
-    <div style={{ marginTop: 48 }}>
-      <Link href="/craft">Craft</Link>
-    </div>
-  </div>);
-}
+  );
+});

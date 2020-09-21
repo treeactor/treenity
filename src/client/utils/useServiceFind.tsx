@@ -1,34 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Node } from '../../treenity/tree/node';
 import client from '../feathers';
-import produce, { applyPatches } from 'immer';
+import produce from 'immer';
+import { applyPatch, types, unprotect as _unprotect } from 'mobx-state-tree';
+
+
+const unprotect = mst => (_unprotect(mst),mst);
 
 export function useServiceFind(name, query) {
-  const [data, _setData] = useState<Node[]>([]);
+  const q = JSON.stringify(query);
+  const nodes = useMemo(() => unprotect(types.array(Node).create()), [name, q]);
   const subIdRef = useRef<string|null>(null);
-  const dataRef = useRef<Node[]>(data);
-  const setData = d => {
-    dataRef.current = d;
-    _setData(d);
-  };
 
   useEffect(() => {
     const service = client.service(name);
 
     const created = (obj) => {
+      nodes.push(obj);
       console.log('created', obj);
-      setData(produce(dataRef.current, draft => {
-        draft.push(obj);
-      }));
     };
     const removed = (id) => {
       console.log('removed', id);
-      setData(produce(dataRef.current, draft => {
-        const idx = draft.findIndex(d => d._id === id);
-        if (idx >= 0) {
-          draft.splice(idx, 1);
-        }
-      }));
+      const idx = nodes.findIndex(d => d._id === id);
+      if (idx >= 0) {
+        nodes.splice(idx, 1);
+      }
     };
 
     const patched = (arg) => {
@@ -38,12 +34,8 @@ export function useServiceFind(name, query) {
 
         console.log('patched', id, patch, rest);
 
-        setData(produce(dataRef.current, draft => {
-          const idx = draft.findIndex(d => d._id === id);
-          if (idx >= 0) {
-            draft[idx] = applyPatches(dataRef.current[idx], patch);
-          }
-        }));
+        const idx = nodes.findIndex(d => d._id === id);
+        applyPatch(nodes[idx], patch);
       } catch (err) {
         console.error(err);
       }
@@ -52,9 +44,8 @@ export function useServiceFind(name, query) {
     service.on('patched', patched);
     service.on('removed', removed);
 
-    service.find({ query: { ...query, subscribe: true } }).then(({ objects, subId }) => {
-      setData(objects);
-      subIdRef.current = subId;
+    service.find({ query: { ...query, subscribe: true } }).then(({ data, subId }) => {
+      nodes.push(...data);
     });
 
     return () => {
@@ -63,7 +54,7 @@ export function useServiceFind(name, query) {
       service.removeListener('removed', removed);
       service.find({ query: { subscribe: false, subId: subIdRef.current } });
     };
-  }, [name]);
+  }, [name, q]);
 
-  return data;
+  return nodes;
 }

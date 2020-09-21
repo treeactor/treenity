@@ -1,14 +1,26 @@
-import { Patch } from 'immer';
-import { createSerializer } from './serializer';
+import { applyAction, getSnapshot, IJsonPatch, ISerializedActionCall } from 'mobx-state-tree';
+import { getPatches } from '../../mst/get-actions';
 
 export interface Update {
-  $set?: object,
-  $unset?: object,
-  // $pushAll?: { [key: string]: any[] },
-  // $push?: object,
+  $set?: object;
+  $unset?: object;
+  $inc?: object;
+  $pushAll?: { [key: string]: any[] };
+  $push?: object;
 }
 
-export function makeUpdateFromPatch(typeName: string, patches: Patch[]): Update {
+export function makeUpdateFromActions(
+  typeName: string,
+  mst: any,
+  actions: ISerializedActionCall[]
+): [Update, IJsonPatch[]] {
+  const patches = getPatches(mst, () => {
+    actions.forEach((action) => applyAction(mst, action));
+  });
+  return [makeUpdateFromPatch(typeName, patches), patches];
+}
+
+export function makeUpdateFromPatch(typeName: string, patches: IJsonPatch[]): Update {
   // const schema = getNamedSchema(typeName);
 
   const update = {} as Update;
@@ -16,7 +28,7 @@ export function makeUpdateFromPatch(typeName: string, patches: Patch[]): Update 
   for (let i = 0; i < patches.length; i++) {
     const patch = patches[i];
 
-    const path = patch.path.join('.');
+    const path = patch.path.substr(1).replace('/', '.');
 
     switch (patch.op) {
       // case 'add':
@@ -41,9 +53,10 @@ export function makeUpdateFromPatch(typeName: string, patches: Patch[]): Update 
       case 'replace':
         update.$set = update.$set || {};
         // if this is
-        update.$set[path] = typeof patch.value === 'object' && patch.value.constructor !== Object
-          ? createSerializer().toPlainJson(patch.value)
-          : patch.value;
+        update.$set[path] =
+          typeof patch.value === 'object' && patch.value.constructor !== Object
+            ? getSnapshot(patch.value)
+            : patch.value;
 
         break;
 

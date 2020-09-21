@@ -7,7 +7,6 @@ import mongoService from 'feathers-mongodb';
 import socketio from '@feathersjs/socketio';
 import configuration from '@feathersjs/configuration';
 
-
 import '../common/index';
 
 import config from '../config-common';
@@ -32,33 +31,43 @@ async function main() {
   app.use(express.errorHandler());
 
   const db = await createClientDb(app);
-  app.use('nodes', mongoService({
-    Model: db.collection('nodes'),
-  }));
+  app.use(
+    'nodes',
+    mongoService({
+      Model: db.collection('nodes'),
+    })
+  );
+  app.use(
+    'changes',
+    mongoService({
+      Model: db.collection('changes'),
+    })
+  );
   app.use('tree', new TreeService());
   app.use('message', new MessageService());
-
 
   app.use('hello', new HelloService());
 
   const { host, port } = config;
 
-  app.listen({
-    host,
-    port,
-  }, () => {
-    console.log(`App is running on http://${host}:${port}`);
+  app.listen(
+    {
+      host,
+      port,
+    },
+    () => {
+      console.log(`App is running on http://${host}:${port}`);
 
-    app.on('connection', connection => {
-      // app.channel('tree').join(connection);
-      app.channel('anonymous').join(connection);
-    });
+      app.on('connection', (connection) => {
+        // app.channel('tree').join(connection);
+        app.channel('anonymous').join(connection);
+      });
 
-    // app.service('tree').publish('patched', data => {
+      // app.service('tree').publish('patched', data => {
       // return app.channel('tree');
-    // });
-  });
-
+      // });
+    }
+  );
 }
 
 main().then(console.log, console.error);

@@ -1,5 +1,2 @@
-
-
-export const meta = (target, key) => {
-  console.log(target, key);
-};
+export { Meta } from './meta/meta.model';
+export { Node } from './tree/node';

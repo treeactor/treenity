@@ -1,14 +1,17 @@
-import { a, is, o, object, s } from '../model/types';
-import { WithId } from '../meta/meta.model';
+import { types } from 'mobx-state-tree';
+import { Meta } from '../meta/meta.model';
 
-@object('node')
-export class Node extends WithId {
-  @is(s)
-  name: string = '';
+export const Timestamp = types.model('timestamp', {
+  createdAt: types.optional(types.Date, () => new Date),
+  updatedAt: types.optional(types.Date, () => new Date),
+})
+  .actions(self => ({
+    setUpdatedAt() {
+      self.updatedAt = new Date;
+    },
+  }));
 
-  @is(o)
-  data: object = {};
-
-  @is(a.of(s), String)
-  arr: string[] = [];
-}
+export const Node = types.compose('node', Meta, Timestamp, types.model({
+  name: types.string,
+  _m: types.array(Meta),
+}));

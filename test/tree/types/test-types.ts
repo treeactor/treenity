@@ -1,46 +1,30 @@
-import { getNamedSchema } from 'yup-decorator';
+import { types as t } from 'mobx-state-tree/dist/types';
+import { IModelType } from 'mobx-state-tree';
 
-import { a, is, n, nested, object, RootClass, s } from '../../../src/treenity/model/types';
-import { WithId } from '../../../src/treenity/meta/meta.model';
-
-@object('inner')
-class Inner extends RootClass {
-  @is(n.required())
-  param1: number = 0;
-
-  constructor(p1?: number) {
-    super();
-    this.param1 = p1 || 0;
+export const withUpdate = (model: IModelType<any, any>): IModelType<any, any> => model.actions(self => ({
+  update(func) {
+    func(self);
   }
-}
+}));
 
-@object('meta')
-export default class Meta extends WithId {
-  @is(s.required())
-  str: string = "";
+const Inner = t.model('Inner',  {
+  param1: 0;
+});
 
-  @is(n.positive())
-  num?: number;
+const Meta = t.model('Meta',  {
+  str: "",
+  num: t.maybe(t.number),
+  arr: t.array(t.string),
+  innerArr: t.optional(t.array(Inner), () => ([Inner.create({ param1: 42 })])),
+  inner: t.maybe(Inner),
+});
+export default Meta;
 
-  @is(a.of(s))
-  arr: string[] = [];
+export const Meta1 = t.model('Meta1',  {
+  meta1: "",
+});
 
-  @is(a.of(Inner))
-  innerArr: Inner[] = [new Inner(42)];
-
-  @nested
-  inner?: Inner;
-}
-
-@object('meta1')
-export class Meta1 extends Meta {
-  @is(s)
-  public meta1: string = "";
-}
-
-@object('meta2')
-export class Meta2 extends Meta {
-  @is(s.required())
-  public meta2: string = "";
-}
+export const Meta2 = withUpdate(t.model('Meta2',  {
+  meta2: "",
+}));
 
