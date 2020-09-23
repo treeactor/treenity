@@ -4,11 +4,12 @@ import { Node } from './node';
 
 import { randomId } from '../../common/random-id';
 import assert from 'assert';
+import { Instance } from 'mobx-state-tree';
 
 const cache = {};
 const subscriptions = {};
 
-export default class TreeService implements ServiceMethods<any> {
+export default class TreeService implements ServiceMethods<Instance<typeof Node>> {
   // @ts-ignore
   collection: Service<any>;
   changes: Service<any>;
@@ -126,4 +127,14 @@ export default class TreeService implements ServiceMethods<any> {
     await this.collection.remove(id);
     return id;
   }
+
+  update(
+    id: NullableId,
+    data: Instance<typeof Node>,
+    params?: Params
+  ): Promise<Instance<typeof Node>[] | Instance<typeof Node>> {
+    throw new Error('update not implemented');
+  }
+
+  [key: string]: any;
 }

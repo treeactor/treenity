@@ -7,6 +7,7 @@ import { Node } from '../../treenity/tree/node';
 import { useServiceFind } from '../utils/useServiceFind';
 import { randomId } from '../../common/random-id';
 import { getActions } from '../../mst/get-actions';
+import { addType } from '../../treenity/types';
 
 function createSomething() {
   const node = Node.create({
@@ -28,11 +29,20 @@ function remove(node: Node) {
   return client.service('tree').remove(node._id);
 }
 
+// const TestMeta = meta('test-meta', (self) => ({
+//   name: '',
+//
+//   doSomething() {
+//     self.name = 'doing' + randomId();
+//   },
+// }));
+
 export default observer(function Tree({}) {
   const nodes = useServiceFind('tree', {});
 
   const patchSomething = (n) =>
     patch(n, (n) => {
+      // n.addMeta(TestMeta, { name: 'patched' + randomId() });
       n.set({ name: 'patched' + randomId() });
     });
 

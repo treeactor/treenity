@@ -18,8 +18,8 @@
       "header": {
         "typ": "access"
       },
-      "audience": "https://yourdomain.com",
-      "issuer": "feathers",
+      "audience": "https://treenity.pro",
+      "issuer": "Treenity",
       "algorithm": "HS256",
       "expiresIn": "1d"
     },
@@ -28,5 +28,5 @@
       "passwordField": "password"
     }
   },
-  "mongodb": "mongodb://localhost:27017/feathers"
+  "mongodb": "mongodb://localhost:27017/treenity-exp"
 }

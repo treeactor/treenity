@@ -6,7 +6,6 @@ import { object } from '../model/types';
 import { warn } from 'winston';
 import EventEmitter from 'events';
 
-
 export default class MessageService extends EventEmitter implements ServiceMethods<any> {
   // @ts-ignore
   private app: Application;
@@ -38,7 +37,7 @@ export default class MessageService extends EventEmitter implements ServiceMetho
   }
 
   connect(meta: Meta, portName, onMsg) {
-    const link = meta._l?.find(l => l.lp === portName);
+    const link = meta._l?.find((l) => l.lp === portName);
     if (!link) {
       warn('msg-service', 'link not found', meta._id, portName);
       return;
@@ -50,22 +49,20 @@ export default class MessageService extends EventEmitter implements ServiceMetho
     // return unsubscriber
     return () => this.off(event, onMsg);
   }
-}
 
+  [key: string]: any;
+}
 
 // type Id = string;
 //
 // Подписки легкие через каналы.
 // сделать хук, в котором принимать - отправлять пакеты
 function useIn(meta: Meta, portName: string, options?: any) {
-  const links = meta.node._l?.filter(l => l.lp === portName);
+  const links = meta.node._l?.filter((l) => l.lp === portName);
 }
 
-
-function useInArray<T>(meta: Meta, portName: string, ): [boolean, T[]] {
-  useEffect(() => {
-
-  });
+function useInArray<T>(meta: Meta, portName: string): [boolean, T[]] {
+  useEffect(() => {});
 
   const loaded = false;
   const array = [{} as T];
@@ -74,9 +71,7 @@ function useInArray<T>(meta: Meta, portName: string, ): [boolean, T[]] {
 }
 
 function useOut(onConnect: Function, portName: string, options?: any): Function {
-  const send = (msg: object) => {
-
-  };
+  const send = (msg: object) => {};
 
   return send;
 }
@@ -85,6 +80,7 @@ function SomeFilterComponent({ value, onChange }) {
   const out = useOut(({ query }) => {
     out([]);
   }, 'out');
-  useIn(value,'in', { query: {} })
-    .pipe(map(data => data * 2)).subscribe(useOut('out'))
+  useIn(value, 'in', { query: {} })
+    .pipe(map((data) => data * 2))
+    .subscribe(useOut('out'));
 }
