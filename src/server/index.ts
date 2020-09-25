@@ -44,6 +44,12 @@ async function main() {
     })
   );
   app.use('tree', new TreeService());
+  app.service('tree').hooks({
+    error: {
+      all: [console.error],
+    },
+  });
+
   app.use('message', new MessageService());
 
   app.use('hello', new HelloService());

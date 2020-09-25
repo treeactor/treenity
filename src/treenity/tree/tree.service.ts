@@ -10,9 +10,8 @@ const cache = {};
 const subscriptions = {};
 
 export default class TreeService implements ServiceMethods<Instance<typeof Node>> {
-  // @ts-ignore
-  collection: Service<any>;
-  changes: Service<any>;
+  collection!: Service<any>;
+  changes!: Service<any>;
   app: any;
 
   setup(app: any, path: string) {
@@ -21,15 +20,16 @@ export default class TreeService implements ServiceMethods<Instance<typeof Node>
     this.changes = app.service('changes');
     const service = app.service(path);
 
-    service.publish('created', (data) => {
-      return app.channel('anonymous');
-    });
+    // service.publish('created', (data) => {
+    //   return app.channel('anonymous');
+    // });
     service.publish('patched', (data) => {
-      return app.channel(data.id);
+      // publish this changes to object channel and parent object channel
+      return [app.channel(data.id), app.channel(data.p)];
     });
-    service.publish('removed', (id) => {
-      return app.channel(id);
-    });
+    // service.publish('removed', (id) => {
+    //   return app.channel(id);
+    // });
 
     app.on('disconnect', (connection) => {
       const cookie = connection.headers.cookie;
@@ -46,13 +46,13 @@ export default class TreeService implements ServiceMethods<Instance<typeof Node>
     const ids = info.ids;
 
     objects.forEach((o) => {
-      const id = o._id;
+      const id = o._id.toString();
       sub.push(id);
       // increment info count
-      const n = ++ids[id.toString()];
+      const n = ++ids[id];
       if (Number.isNaN(n)) {
         ids[id] = 1;
-        this.app.channel(id.toString()).join(connection);
+        this.app.channel(id).join(connection);
       }
     });
 
@@ -98,7 +98,7 @@ export default class TreeService implements ServiceMethods<Instance<typeof Node>
   }
   async create(data: any, params: Params) {
     const obj = await this.collection.create(data, params);
-    await this.changes.create({ _id: obj._id }, params);
+    await this.changes.create({ _id: obj._id, _: [] }, params);
     return obj;
   }
   // async update(id: NullableId, data: any, params: Params) {
@@ -107,7 +107,7 @@ export default class TreeService implements ServiceMethods<Instance<typeof Node>
   async patch(id: NullableId, actions: any, params: Params) {
     const snapshot = (await this.collection.find({ query: { _id: id } }))[0];
     const node = Node.create(snapshot);
-    const [update, patch] = makeUpdateFromActions('', node, actions);
+    const [[update, extraUpdate], patch] = makeUpdateFromActions('', node, actions);
     update.$set = update.$set || {};
     update.$set.updatedAt = Date.now();
     update.$inc = { _r: 1 };
@@ -115,10 +115,12 @@ export default class TreeService implements ServiceMethods<Instance<typeof Node>
     console.log('patching', id, actions);
 
     const obj = await this.collection.patch(id, update);
-    await this.changes.patch(id, { $push: { _: patch } });
+    if (extraUpdate) await this.collection.patch(id, extraUpdate);
+
+    await this.changes.patch(id, { $push: { _: { ...patch, at: new Date() } } });
 
     // this.emit('patched', { id, patch });
-    return { id, r: obj._r, patch };
+    return { id, p: obj._p, r: obj._r, patch };
     // return patch;
     // this.emit(id, patch);
     // this.app.channel(id).send(patch);

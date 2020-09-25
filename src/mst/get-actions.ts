@@ -1,8 +1,8 @@
-import { Node } from '../treenity/tree/node';
-import { IJsonPatch, ISerializedActionCall, onAction, onPatch } from 'mobx-state-tree';
+import { IAnyType, IJsonPatch, ISerializedActionCall, recordPatches } from 'mobx-state-tree';
+import { onAction } from './record-actions';
 
-export function getActions(mst: Node, updater): ISerializedActionCall[] {
-  const actions = [];
+export function getActions(mst: IAnyType, updater): readonly ISerializedActionCall[] {
+  const actions: ISerializedActionCall[] = [];
   const dispose = onAction(mst, (action) => actions.push(action));
   updater(mst);
   dispose();
@@ -10,11 +10,15 @@ export function getActions(mst: Node, updater): ISerializedActionCall[] {
   return actions;
 }
 
-export function getPatches(mst, updater): IJsonPatch[] {
-  const patches = [];
-  const dispose = onPatch(mst, (patch) => patches.push(patch));
+export function getPatches(mst, updater): readonly IJsonPatch[] {
+  const recorder = recordPatches(mst);
   updater(mst);
-  dispose();
+  recorder.stop();
 
-  return patches;
+  return recorder.patches;
+}
+
+export function untrack(fn: Function): Function {
+  fn.isUntracked = true;
+  return fn;
 }

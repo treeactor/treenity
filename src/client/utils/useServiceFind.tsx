@@ -4,13 +4,12 @@ import client from '../feathers';
 import produce from 'immer';
 import { applyPatch, types, unprotect as _unprotect } from 'mobx-state-tree';
 
-
-const unprotect = mst => (_unprotect(mst),mst);
+const unprotect = (mst) => (_unprotect(mst), mst);
 
 export function useServiceFind(name, query) {
   const q = JSON.stringify(query);
   const nodes = useMemo(() => unprotect(types.array(Node).create()), [name, q]);
-  const subIdRef = useRef<string|null>(null);
+  const subIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const service = client.service(name);
@@ -21,7 +20,7 @@ export function useServiceFind(name, query) {
     };
     const removed = (id) => {
       console.log('removed', id);
-      const idx = nodes.findIndex(d => d._id === id);
+      const idx = nodes.findIndex((d) => d._id === id);
       if (idx >= 0) {
         nodes.splice(idx, 1);
       }
@@ -30,12 +29,14 @@ export function useServiceFind(name, query) {
     const patched = (arg) => {
       try {
         if (!arg) return;
-        const { id, patch, ...rest } = arg;
+        const { id, patch, r, ...rest } = arg;
 
-        console.log('patched', id, patch, rest);
+        console.log('patched', id, patch, r, rest);
 
-        const idx = nodes.findIndex(d => d._id === id);
-        applyPatch(nodes[idx], patch);
+        const idx = nodes.findIndex((d) => d._id === id);
+        const node = nodes[idx];
+        applyPatch(node, patch);
+        applyPatch(node, { path: '/_r', op: 'replace', value: r });
       } catch (err) {
         console.error(err);
       }
